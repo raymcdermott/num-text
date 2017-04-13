@@ -26,6 +26,7 @@ Some aspects of this text are repeated:
 ## Unit changes
 
 |Value|Name|
+|-----|----|
 |0-100|singular|
 |10<sup>2|hundred|
 |10<sup>3|thousand|
