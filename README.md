@@ -28,10 +28,10 @@ Some aspects of this text are repeated:
 |Value|Name|
 |-----|----|
 |0-100|singular|
-|10<sup>2|hundred|
-|10<sup>3|thousand|
-|10<sup>6|million|
-|10<sup>9|billion|
+|10<sup>2</sup>|hundred|
+|10<sup>3</sup>|thousand|
+|10<sup>6</sup>|million|
+|10<sup>9</sup>|billion|
 |... |...|
 
 After thousands the unit changes on the third increase of the exponent.
@@ -51,6 +51,10 @@ Where UNIT can be a value or nil
 - 205 = two hundred and five
 
 We know that if the number is > 1000 the UNIT will be set.
+
+## Groups of one or two
+
+When the number is in between the unit ranges - so 10<sup>4</sup> and 10<sup>5</sup> for example - the first number should be expressed in the same way as singular numbers
 
 ## Deducing number ranges
 
