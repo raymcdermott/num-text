@@ -1,52 +1,66 @@
 # num-text
 
-A trivial Clojure library designed to output numbers as text - UK English style.
+A trivial Clojure library designed to output numbers as text - using modern British units and grammar.
 
-## Usage
 
-How should we emit the following numbers?
+## Objective
+
+We should be able to emit number in the following style
  
 |number|text|
 |----| ---|
 | 8 | eight|
 | 79 | seventy nine|
 | 619 | six hundred and nineteen|
+| 5 919 | five thousand, nine hundred and nineteen |
+| 49 191 | forty nine thousand, one hundred and ninety one |
+| 391 919 | three hundred and ninety one thousand, nine hundred and nineteen |
+| 2 919 191 | two million, nine hundred and nineteen thousand, one hundred and ninety one |
+| 89 191 919 | eighty nine million, one hundred and ninety one thousand, nine hundred and nineteen |
 
-5 919 
-- five thousand, nine hundred and nineteen
 
-49 191
+## Breaking down the problem
 
-- forty nine thousand, one hundred and ninety one
+Some aspects of this text are repeated:
 
-391 919
-- three hundred and ninety one thousand, nine hundred and nineteen
+## Unit changes
 
-2 919 191 
-- two million, nine hundred and nineteen thousand, one hundred and ninety one
+|Value|Name|
+|0-100|singular|
+|10<sup>2|hundred|
+|10<sup>3|thousand|
+|10<sup>6|million|
+|10<sup>9|billion|
+|... |...|
+
+After thousands the unit changes on the third increase of the exponent.
+
+If we can deduce the exponent of the number, we can assign it to the proper name. 
+
+## Groups of three
+
+When we have a group of three numbers we should express them as:
  
-89 191 919
-- eighty nine million, one hundred and ninety one thousand, nine hundred and nineteen
+- X hundred and Y singular UNIT
+
+Where UNIT can be a value or nil
+
+- 205 000 = two hundred and five thousand
+
+- 205 = two hundred and five
+
+We know that if the number is > 1000 the UNIT will be set.
+
+## Deducing number ranges
+
+The common choices I have seen here are to print the number into a string and count the digits.
+
+This works but seems hackish.
+
+I would prefer to be able to compare the number against a collection of number ranges.
 
 
 
-
-Should we express this number using the first one or two digits?
-
-19191 919 - should be 19 million, remainder 191 919
-2919 191 - should be 2 million, remainder 919 191
-391919 - should be 3 hundred, remainder 91 919
-      - three hundred and ninety one thousand nine hundred and nineteen
-49191 - should be 49 thousand, remainder 191
-     - forty nine thousand one hundred and ninety one
-5919 - should be 5 thousand remainder 919
-    - five thousand nine hundred and nineteen
-619 - should be 6 hundred remainder 19
-   - six hundred and nineteen
-79 - should be 79
-  - seventy nine
-8 - should be 8
- - eight"
 
 ## License
 
