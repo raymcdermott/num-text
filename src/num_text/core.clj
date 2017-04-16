@@ -1,111 +1,90 @@
 (ns num-text.core)
 
+(def x1 [:one :two :three :four :five :six :seven :eight :nine
+         :ten :eleven :twelve :thirteen :fourteen :fifteen :sixteen :seventeen :eighteen :nineteen])
+(def singles (zipmap (range 1 20) x1))
+
+(def x10 [:twenty :thirty :forty :fifty :sixty :seventy :eighty :ninety])
+(def tens (zipmap (range 20 99 10) x10))
+
+(defn nums-lt-100
+  [num]
+  {:pre [(pos? num) (< num 100)]}
+  (if-let [answer (or (get singles num)
+                      (get tens num))]
+    [answer]
+    (let [ten-part  (quot num 10)
+          ten-whole (* 10 ten-part)]
+      [(get tens ten-whole) (nums-lt-100 (- num ten-whole))])))
+
+(defn inject-and
+  [num-vec]
+  (let [size (count num-vec)]
+    (cond (<= size 2) num-vec
+          :else (concat (take 2 num-vec) [:and] (drop 2 num-vec)))))
+
+(defn nums-gt-100-lt-1000
+  [num]
+  {:pre [(>= num 100) (< num 1000)]}
+  (let [hundreds  (quot num 100)
+        remainder (- num (* hundreds 100))
+        result    [(get singles hundreds) :hundred
+                   (if-not (zero? remainder)
+                     (nums-lt-100 remainder))]]
+    (inject-and (remove nil? result))))
+
+(defn units [start step count]
+  "Generate a list of numbers of count length start
+  starting at start multiplied by step"
+  (reduce (fn [a b] (conj a (* (last a) step)))
+          [start] (range count)))
+
+(def large-numbers-text [:thousand :million :billion :trillion
+                         :quadrillion :quintillion :sextillion
+                         :septillion :octillion :nonillion
+                         :decillion :undecillion :duodecillion
+                         :tredecillion :quattuordecillion])
+
+(def unitable (units 1000N 1000N (dec (count large-numbers-text))))
+(def unit-boundaries (map (fn [u] [u (* u 1000N)]) unitable))
+
+(def large-number-map (zipmap unitable large-numbers-text))
+(def inverse-large-numbers-map
+  (reduce merge {} (map (juxt val key) large-number-map)))
+
+(defn which-bounds? [num unit-bounds]
+  (remove nil? (map (fn [[lower upper]]
+                      (if (and (>= num lower)
+                               (< num upper))
+                        lower)) unit-bounds)))
+
+(defn which-unit? [num]
+  (let [unit (which-bounds? num unit-boundaries)]
+    (get large-number-map (first unit))))
+
+(defn num-representation
+  [num]
+  (flatten
+    (cond
+      (< num 100) (nums-lt-100 num)
+      (< num 1000) (nums-gt-100-lt-1000 num)
+      :else (let [unit       (which-unit? num)
+                  divisor    (unit inverse-large-numbers-map)
+                  first-part (quot num divisor)
+                  remainder  (- num (* divisor first-part))]
+              (if (zero? remainder)
+                [(num-representation first-part) unit]
+                [(num-representation first-part)
+                 unit
+                 (num-representation remainder)])))))
+
+(defn num-vec->text
+  [num-vec]
+  (clojure.string/capitalize
+    (apply str (interpose " " (map name num-vec)))))
+
 (defn num->text
   [num]
-  (let [low-nums  {1  "one" 2 "two" 3 "three" 4 "four" 5 "five" 6 "six"
-                   7  "seven" 8 "eight" 9 "nine" 10 "ten" 11 "eleven"
-                   12 "twelve" 13 "thirteen" 14 "fourteen" 15 "fifteen"
-                   16 "sixteen" 17 "seventeen" 18 "eighteen" 19 "nineteen"}
+  (num-vec->text (num-representation num)))
 
-        tens      {20 "twenty" 30 "thirty" 40 "forty" 50 "fifty" 60 "sixty"
-                   70 "seventy" 80 "eighty" 90 "ninety"}
-
-        ten-1000s {1 "ten" 2 "twenty" 3 "thirty" 4 "forty" 5 "fifty"
-                   6 "sixty" 7 "seventy" 8 "eighty" 9 "ninety"}]
-
-    (defn teenables [n]
-      "Generate a list of n numbers divisible by 10 000"
-      (reduce (fn [a b] (conj a (*' (last a) 1000)))
-              [10000] (range n)))
-
-    (defn teen?
-      [num]
-      "Should we express this number using the first one or two digits?
-       19191 919 - should be 19 million, remainder 191 919
-       2919 191 - should be 2 million, remainder 919 191
-       391919 - should be 3 hundred, remainder 91 919
-              - three hundred and ninety one thousand nine hundred and nineteen
-       49191 - should be 49 thousand, remainder 191
-             - forty nine thousand one hundred and ninety one
-       5919 - should be 5 thousand remainder 919
-            - five thousand nine hundred and nineteen
-       619 - should be 6 hundred remainder 19
-           - six hundred and nineteen
-       79 - should be 79
-          - seventy nine
-       8 - should be 8
-         - eight"
-
-      (if (and (>= num 10) (< num 100))
-        num
-        (let [teenish (teenables 5)
-              two-digits (remove nil?
-                                 (map (fn [lower-bound]
-                                        (let [upper-bound (* lower-bound 10)
-                                              divisor     (/ lower-bound 10)]
-                                          (if (and (>= num lower-bound) (<= num upper-bound))
-                                            (let [carry (mod num divisor)
-                                                  teen  (/ (- num carry) divisor)]
-                                              [teen carry])))) teenish))]
-          (if (not-empty two-digits)
-            two-digits
-            ["TODO" num]))))
-
-    (defn iter
-      ([n divisor text]
-       (iter n divisor text false))
-
-      ([n divisor text tens?]
-       (let [unit  (quot n divisor)
-             carry (- n (* divisor unit))]
-         (println "carry" carry)
-         (str (cond
-                (and tens? (< unit 20)) (str (get ten-1000s unit) " ")
-                (< unit 20) (str (get low-nums unit) text)
-                :else (str (num->text carry) text))
-              (num->text carry)))))
-
-    (cond
-      (< num 20)
-      (str (get low-nums num))
-
-      (and (>= num 20) (< num 100))
-      (let [modulus (mod num 10)
-            tenny   (- num modulus)]
-        (if (zero? modulus)
-          (str (get tens tenny))
-          (str (get tens tenny) " "
-               (num->text modulus))))
-
-      (and (>= num 100) (<= num 1000))
-      (iter num 100 " hundred ")
-
-      (and (>= num 1000) (<= num 10000))
-      (iter num 1000 " thousand ")
-
-      (and (>= num 10000) (<= num 100000))
-      (iter num 10000 " thousand " true)
-
-      (and (>= num 100000) (<= num 1000000))
-      (iter num 100000 " hundred ")
-
-      (and (>= num 1000000) (<= num 10000000))
-      (iter num 1000000 " million "))))
-
-(let [nums (random-sample 0.5 (range 1 10))]
-  (map (fn [n] [n (num->text n)]) nums))
-
-(let [nums (random-sample 0.05 (range 10 100))]
-  (map (fn [n] [n (num->text n)]) nums))
-
-(let [nums (random-sample 0.005 (range 100 1000))]
-  (map (fn [n] [n (num->text n)]) nums))
-
-(let [nums (random-sample 0.0005 (range 1000 10000))]
-  (map (fn [n] [n (num->text n)]) nums))
-
-(let [nums (random-sample 0.00005 (range 10000 100000))]
-  (map (fn [n] [n (num->text n)]) nums))
-
-
-
+(num->text 123456789)

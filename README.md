@@ -6,39 +6,34 @@ A trivial Clojure library designed to output numbers as text - using modern Brit
 ## Objective
 
 We should be able to emit number in the following style
- 
-|number|text|
-|----| ---|
-| 8 | eight|
-| 79 | seventy nine|
-| 619 | six hundred and nineteen|
-| 5 919 | five thousand, nine hundred and nineteen |
-| 49 191 | forty nine thousand, one hundred and ninety one |
-| 391 919 | three hundred and ninety one thousand, nine hundred and nineteen |
-| 2 919 191 | two million, nine hundred and nineteen thousand, one hundred and ninety one |
-| 89 191 919 | eighty nine million, one hundred and ninety one thousand, nine hundred and nineteen |
+
+```clojure
+(num->text 123456789)
+=> "One hundred and twenty three million four hundred and fifty six thousand seven hundred and eighty nine"
+```
+
+## Explanation
+
+See the blog post [link] explaining why I took this approach in more detail.
+
+## Usage
+
+
+## Testing
+
+
+## Spec
+
+
+## License
+
+Distributed under the Eclipse Public License either version 1.0 or (at
+your option) any later version.
 
 
 ## Breaking down the problem
 
-Some aspects of this text are repeated:
-
-## Unit changes
-
-|Value|Name|
-|-----|----|
-|0-100|singular|
-|10<sup>2</sup>|hundred|
-|10<sup>3</sup>|thousand|
-|10<sup>6</sup>|million|
-|10<sup>9</sup>|billion|
-|... |...|
-
-After thousands the unit changes on the third increase of the exponent.
-
-If we can deduce the exponent of the number, we can assign it to the proper name. 
-
-## Groups of three
+### Groups of three
 
 When we have a group of three numbers we should express them as:
  
@@ -52,22 +47,27 @@ Where UNIT can be a value or nil
 
 We know that if the number is > 1000 the UNIT will be set.
 
-## Groups of one or two
+### Groups of one or two
 
 When the number is in between the unit ranges - so 10<sup>4</sup> and 10<sup>5</sup> for example - the first number should be expressed in the same way as singular numbers
 
-## Deducing number ranges
+### Deducing number ranges
 
 The common choices I have seen here are to print the number into a string and count the digits.
 
-This works but seems hackish.
+This works but is hackish - it places the number into an impoverished and hostile environment.
 
-I would prefer to be able to compare the number against a collection of number ranges.
+Why not compare the number against a collection of number ranges.
 
+### Hard coding text / number mappings
 
+This seems awkward as we know that computers can generate number sequences. 
 
+Using lists of keywords we can use symbols as a stand in for text. While this may seem more complex, it's actually simpler.
 
-## License
+It gives us many affordances for checking general constraints of the solution that would be much more complex with strings.
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Example: all odd numbers end with an odd number between 1 - 19. 
+
+(map #(get singles %) (filter odd? (keys singles)))
+=> (:seven :one :fifteen :thirteen :seventeen :three :nineteen :eleven :nine :five)
