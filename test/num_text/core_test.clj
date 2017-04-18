@@ -25,6 +25,18 @@
           (= "One hundred and twenty three million four hundred and fifty six thousand seven hundred and eighty nine"
              (num->text 123456789))))))
 
+(defn matches-word-count?
+  [target-count sample-numbers]
+  (= 1 (count (distinct
+                (filter #(= target-count %)
+                        (map #(count (num-representation %))
+                             sample-numbers))))))
+
+(defn matches-words?
+  [predicate map-fn sample-numbers]
+  (= 1 (count (distinct (filter #(= predicate %)
+                                (map map-fn sample-numbers))))))
+
 (deftest internal-layer
 
   (testing "for correct internal mapping numbers 1 - 19 inclusive"
@@ -45,69 +57,48 @@
     (is (thrown? AssertionError (num-representation 0))))
 
   (testing "results up to 20 are a single word"
-    (is (= 20 (apply + (map #(count (num-representation %))
-                            (range 1 21))))))
+    (is (= 20 (apply + (map #(count (num-representation %)) (range 1 21))))))
 
   (testing "results of 10, 20, 30 ... 90 are a single word"
-    (is (= 9 (apply + (map #(count (num-representation %))
-                           (range 10 99 10))))))
+    (is (matches-word-count? 1 (range 10 99 10))))
 
-  (testing "random odd numbers between 20 100 are two words"
-    (let [sample (filter odd? (random-sample 0.5 (range 20 100)))]
-      (is (= (* 2 (count sample))
-             (apply + (map #(count (num-representation %)) sample))))))
+  (testing "odd numbers between 20 100 are two words"
+    (let [sample (filter odd? (range 20 100))]
+      (is (= (matches-word-count? 2 sample)))))
 
-  (testing "random even numbers (not a multiple of 10) between 20 100 are two words"
-    (let [sample (filter #(and (not (= 0 (mod % 10)))
-                               (even? %))
-                         (random-sample 0.5 (range 20 100)))]
-      (is (= (* 2 (count sample))
-             (apply + (map #(count (num-representation %)) sample))))))
+  (testing "even numbers (not a multiple of 10) between 20 100 are two words"
+    (let [sample (filter #(and (not (= 0 (mod % 10))) (even? %)) (range 20 100))]
+      (is (matches-word-count? 2 sample))))
 
   (testing "numbers between 101 and 120 are four words"
-    (let [sample (range 101 121)]
-      (is (= (* 4 (count sample))
-             (apply + (map #(count (num-representation %)) sample))))))
+    (is (matches-word-count? 4 (range 101 121))))
 
-  (testing "random odd numbers between 121 and 200 are five words"
-    (let [sample (filter odd? (random-sample 0.1 (range 121 200)))]
-      (is (= (* 5 (count sample))
-             (apply + (map #(count (num-representation %)) sample))))))
+  (testing "odd numbers between 121 and 200 are five words"
+    (let [sample (filter odd? (range 121 200))]
+      (is (matches-word-count? 5 sample))))
 
-  (testing "random odd numbers between 921 and 1000 are five words"
-    (let [sample (filter odd? (random-sample 0.1 (range 921 1000)))]
-      (is (= (* 5 (count sample))
-             (apply + (map #(count (num-representation %)) sample))))))
+  (testing "odd numbers between 921 and 1000 are five words"
+    (let [sample (filter odd? (range 921 1000))]
+      (is (matches-word-count? 5 sample))))
 
-  (testing "first nn1, across all large units, ends in :one"
+  (testing "first nn1, across all large units, ends in :one and is 4 words"
     (let [sample (map #(+ 1N %) unitable)]
-      (is (= (count sample)
-             (count (filter #(= :one %)
-                            (map #(last (num-representation %)) sample)))))))
+      (is (matches-words? :one #(first (num-representation %)) sample))
+      (is (matches-word-count? 4 sample))))
 
   (testing "last nn99, across all large units, ends in :nine"
     (let [sample (map #(- % 1N) unitable)]
-      (is (= (count sample)
-             (count (filter #(= :nine %)
-                            (map #(last (num-representation %)) sample)))))))
+      (is (matches-words? :nine #(first (num-representation %)) sample))))
 
   (testing "ten of all large units, starts with :ten and is two words"
     (let [sample (units 10000N 1000N (dec (count large-numbers-text)))]
-      (is (= (count sample)
-             (count (filter #(= :ten %)
-                            (map #(first (num-representation %)) sample)))))
-      (is (= (* 2 (count sample))
-             (apply + (map #(count (num-representation %)) sample))))))
+      (is (matches-words? :ten #(first (num-representation %)) sample))
+      (is (matches-word-count? 2 sample))))
 
-  (testing "first hundred of all large units, starts with :one :hundred and is three words"
+  (testing "first hundred of all large units, starts with :one :hundred and is 3 words"
     (let [sample (units 100000N 1000N (dec (count large-numbers-text)))]
-      (is (= (count sample)
-             (count (filter #(= [:one :hundred] %)
-                            (map #(take 2 (num-representation %)) sample)))))
-      (is (= (* 3 (count sample))
-             (apply + (map #(count (num-representation %)) sample)))))))
-
-
+      (is (matches-words? [:one :hundred] #(take 2 (num-representation %)) sample))
+      (is (matches-word-count? 3 sample)))))
 
 
 
