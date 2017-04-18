@@ -1,7 +1,7 @@
 (ns num-text.core)
 
-(def x1 [:one :two :three :four :five :six :seven :eight :nine
-         :ten :eleven :twelve :thirteen :fourteen :fifteen :sixteen :seventeen :eighteen :nineteen])
+(def x1 [:one :two :three :four :five :six :seven :eight :nine :ten
+         :eleven :twelve :thirteen :fourteen :fifteen :sixteen :seventeen :eighteen :nineteen])
 (def singles (zipmap (range 1 20) x1))
 (def inverse-singles (reduce merge {} (map (juxt val key) singles)))
 
@@ -20,9 +20,9 @@
           ten-whole (* 10 ten-part)]
       [(get tens ten-whole) (nums-lt-100 (- num ten-whole))])))
 
-(defn units [start step count]
-  "Generate a list of numbers of count length start
-  starting at start multiplied by step"
+(defn units
+  [start step count]
+  "Generate a list of numbers of count length, starting at start multiplied by step"
   (reduce (fn [a b] (conj a (* (last a) step)))
           [start] (range count)))
 
@@ -36,9 +36,7 @@
 (def unit-boundaries (map (fn [u] [u (* u 1000N)]) unitable))
 
 (def large-number-map (zipmap unitable large-numbers-text))
-(def inverse-large-numbers-map
-  (reduce merge {} (map (juxt val key) large-number-map)))
-
+(def inverse-large-numbers-map (reduce merge {} (map (juxt val key) large-number-map)))
 
 (defn nums-gt-100-lt-1000
   [num]
@@ -50,13 +48,15 @@
                      (nums-lt-100 remainder))]]
     (remove nil? result)))
 
-(defn which-bounds? [num unit-bounds]
+(defn which-bounds?
+  [num unit-bounds]
   (remove nil? (map (fn [[lower upper]]
                       (if (and (>= num lower)
                                (< num upper))
                         lower)) unit-bounds)))
 
-(defn which-unit? [num]
+(defn which-unit?
+  [num]
   (let [unit (which-bounds? num unit-boundaries)]
     (get large-number-map (first unit))))
 
