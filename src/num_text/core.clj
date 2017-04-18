@@ -40,19 +40,6 @@
   (reduce merge {} (map (juxt val key) large-number-map)))
 
 
-(defn inject-and
-  [num-vec]
-  (if (<= (count num-vec) 2)
-    num-vec
-    (let [check-map (assoc inverse-large-numbers-map :hundred 100)]
-      (cond
-        (get check-map (last num-vec)) num-vec
-        (get check-map (last (drop-last 1 num-vec)))
-        (concat (drop-last 1 num-vec) [:and] (take-last 1 num-vec))
-        (get check-map (last (drop-last 2 num-vec)))
-        (concat (drop-last 2 num-vec) [:and] (take-last 2 num-vec))
-        :else num-vec))))
-
 (defn nums-gt-100-lt-1000
   [num]
   {:pre [(>= num 100) (< num 1000)]}
@@ -73,22 +60,36 @@
   (let [unit (which-bounds? num unit-boundaries)]
     (get large-number-map (first unit))))
 
+(defn inject-and
+  [num-vec]
+  (if (<= (count num-vec) 2)
+    num-vec
+    (let [check-map (assoc inverse-large-numbers-map :hundred 100)]
+      (cond
+        (get check-map (last num-vec)) num-vec
+        (get check-map (last (drop-last 1 num-vec)))
+        (concat (drop-last 1 num-vec) [:and] (take-last 1 num-vec))
+        (get check-map (last (drop-last 2 num-vec)))
+        (concat (drop-last 2 num-vec) [:and] (take-last 2 num-vec))
+        :else num-vec))))
+
 (defn num-representation
   [num]
-  (inject-and (flatten
-                (cond
-                  (< num 100) (nums-lt-100 num)
-                  (< num 1000) (nums-gt-100-lt-1000 num)
-                  :else (let [unit           (which-unit? num)
-                              divisor        (unit inverse-large-numbers-map)
-                              first-part     (quot num divisor)
-                              remainder      (- num (* divisor first-part))
-                              representation (if (zero? remainder)
-                                               [(num-representation first-part) unit]
-                                               [(num-representation first-part)
-                                                unit
-                                                (num-representation remainder)])]
-                          representation)))))
+  (inject-and
+    (flatten
+      (cond
+        (< num 100) (nums-lt-100 num)
+        (< num 1000) (nums-gt-100-lt-1000 num)
+        :else (let [unit           (which-unit? num)
+                    divisor        (unit inverse-large-numbers-map)
+                    first-part     (quot num divisor)
+                    remainder      (- num (* divisor first-part))
+                    representation (if (zero? remainder)
+                                     [(num-representation first-part) unit]
+                                     [(num-representation first-part)
+                                      unit
+                                      (num-representation remainder)])]
+                representation)))))
 
 (defn num-vec->text
   [num-vec]
