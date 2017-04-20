@@ -25,21 +25,19 @@
 
 (map #(s/valid? :num/number %) (range 5))
 
-
-; for a sample of known correct values 1 - 19
+; test internal mapping is working as expected
 (s/def :num/known-valid-single
   (s/and #(get inverse-singles %) keyword?))
 
 (map #(s/valid? :num/known-valid-single %)
      (map #(first (num-representation %)) (range 1 20)))
 
-; for 20, 30 ... 90
+; test internal mapping is working as expected
 (s/def :num/known-valid-x10
   (s/and #(get inverse-tens %) keyword?))
 
 (map #(s/valid? :num/known-valid-x10 %)
      (map #(first (num-representation %)) (range 20 91 10)))
-
 
 ; all answers 100 to 1000 have 4 or 5 words
 (s/def :num/good-wc-100-to-1k
@@ -47,7 +45,7 @@
         :words-5 #(= 5 (count %))))
 
 (map #(s/valid? :num/good-wc-100-to-1k %)
-     (map #(num-representation %) (random-sample 0.005 (range 100 1000))))
+     (map #(num-representation %) (range 100 1000)))
 
 ; odd numbers between 121 and 200 are five words
 (s/def :num/good-wc-121-200 #(= 5 (count %)))
@@ -55,4 +53,5 @@
 (distinct
   (map #(s/valid? :num/good-wc-121-200 %)
        (map #(num-representation %)
-            (filter odd? (random-sample 0.5 (range 121 200))))))
+            (filter odd? (range 121 200)))))
+

@@ -25,6 +25,14 @@
           (= "One hundred and twenty three million four hundred and fifty six thousand seven hundred and eighty nine"
              (num->text 123456789))))))
 
+; this should never happen
+(defn adjacent-ands?
+  [num-vec]
+  (not (empty?
+         (filter #(> (count %) 1)
+                 (filter #(= :and (first %))
+                         (partition-by #(= :and %) num-vec))))))
+
 (defn matches-word-count?
   [target-count sample-numbers]
   (= 1 (count (distinct
@@ -75,30 +83,41 @@
 
   (testing "odd numbers between 121 and 200 are five words"
     (let [sample (filter odd? (range 121 200))]
-      (is (matches-word-count? 5 sample))))
+      (is (matches-word-count? 5 sample))
+      (is (empty? (filter true? (map #(adjacent-ands? (num-representation %)) sample))))))
 
   (testing "odd numbers between 921 and 1000 are five words"
     (let [sample (filter odd? (range 921 1000))]
-      (is (matches-word-count? 5 sample))))
+      (is (matches-word-count? 5 sample))
+      (is (empty? (filter true? (map #(adjacent-ands? (num-representation %)) sample))))))
 
   (testing "first nn1, across all large units, ends in :one and is 4 words"
     (let [sample (map #(+ 1N %) unitable)]
-      (is (matches-words? :one #(first (num-representation %)) sample))
-      (is (matches-word-count? 4 sample))))
+      (is (matches-words? :one #(last (num-representation %)) sample))
+      (is (matches-word-count? 4 sample))
+      (is (empty? (filter true? (map #(adjacent-ands? (num-representation %)) sample))))))
+
+  (testing "first nn101, across all large units, ends in :one"
+    (let [sample (map #(+ 101N %) unitable)]
+      (is (matches-words? :one #(last (num-representation %)) sample))
+      (is (empty? (filter true? (map #(adjacent-ands? (num-representation %)) sample))))))
 
   (testing "last nn99, across all large units, ends in :nine"
     (let [sample (map #(- % 1N) unitable)]
-      (is (matches-words? :nine #(first (num-representation %)) sample))))
+      (is (matches-words? :nine #(first (num-representation %)) sample))
+      (is (empty? (filter true? (map #(adjacent-ands? (num-representation %)) sample))))))
 
   (testing "ten of all large units, starts with :ten and is two words"
     (let [sample (units 10000N 1000N (dec (count large-numbers-text)))]
       (is (matches-words? :ten #(first (num-representation %)) sample))
-      (is (matches-word-count? 2 sample))))
+      (is (matches-word-count? 2 sample))
+      (is (empty? (filter true? (map #(adjacent-ands? (num-representation %)) sample))))))
 
   (testing "first hundred of all large units, starts with :one :hundred and is 3 words"
     (let [sample (units 100000N 1000N (dec (count large-numbers-text)))]
       (is (matches-words? [:one :hundred] #(take 2 (num-representation %)) sample))
-      (is (matches-word-count? 3 sample)))))
+      (is (matches-word-count? 3 sample))
+      (is (empty? (filter true? (map #(adjacent-ands? (num-representation %)) sample)))))))
 
 
 

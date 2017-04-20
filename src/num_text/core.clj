@@ -3,12 +3,12 @@
 (def x1 [:one :two :three :four :five :six :seven :eight :nine :ten
          :eleven :twelve :thirteen :fourteen :fifteen :sixteen :seventeen :eighteen :nineteen])
 (def singles (zipmap (range 1 20) x1))
-(def inverse-singles (reduce merge {} (map (juxt val key) singles)))
+(def inverse-singles (into {} (map (fn [[a b]] [b a])) singles))
 
 
 (def x10 [:twenty :thirty :forty :fifty :sixty :seventy :eighty :ninety])
 (def tens (zipmap (range 20 99 10) x10))
-(def inverse-tens (reduce merge {} (map (juxt val key) tens)))
+(def inverse-tens (into {} (map (fn [[a b]] [b a])) tens))
 
 (defn nums-lt-100
   [num]
@@ -36,7 +36,7 @@
 (def unit-boundaries (map (fn [u] [u (* u 1000N)]) unitable))
 
 (def large-number-map (zipmap unitable large-numbers-text))
-(def inverse-large-numbers-map (reduce merge {} (map (juxt val key) large-number-map)))
+(def inverse-large-numbers-map (into {} (map (fn [[a b]] [b a])) large-number-map))
 
 (defn nums-gt-100-lt-1000
   [num]
@@ -66,11 +66,12 @@
     num-vec
     (let [check-map (assoc inverse-large-numbers-map :hundred 100)]
       (cond
+        (= :and (last (drop-last 1 num-vec))) num-vec
         (get check-map (last num-vec)) num-vec
-        (get check-map (last (drop-last 1 num-vec)))
-        (concat (drop-last 1 num-vec) [:and] (take-last 1 num-vec))
-        (get check-map (last (drop-last 2 num-vec)))
-        (concat (drop-last 2 num-vec) [:and] (take-last 2 num-vec))
+        (get check-map (last (drop-last 1 num-vec))) (concat (drop-last 1 num-vec) [:and]
+                                                             (take-last 1 num-vec))
+        (get check-map (last (drop-last 2 num-vec))) (concat (drop-last 2 num-vec) [:and]
+                                                             (take-last 2 num-vec))
         :else num-vec))))
 
 (defn num-representation
